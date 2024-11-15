@@ -6,7 +6,8 @@ use solana_program::{
     program_error::ProgramError,
     pubkey::Pubkey,
 };
-use spl_token::instruction::transfer as token_transfer;
+use spl_token::instruction::{mint_to, transfer as token_transfer};
+use spl_token::state::Mint;
 
 const AUTHORIZED_SELLERS: &[&str] = &[
     "FGcSKtGsjLcAqMpnbm7kQbgpBXGEW6bQTXmFntuREjXb",
@@ -80,6 +81,46 @@ pub fn process_sell(program_id: &Pubkey, accounts: &[AccountInfo], amount: u64) 
         &[
             seller_token_account.clone(),
             token_mint_account.clone(),
+            token_program_account.clone(),
+        ],
+    )?;
+
+    Ok(())
+}
+
+pub fn process_mint(_program_id: &Pubkey, accounts: &[AccountInfo], amount: u64) -> ProgramResult {
+    let account_info_iter = &mut accounts.iter();
+
+    let mint_account = next_account_info(account_info_iter)?;
+    let destination_token_account = next_account_info(account_info_iter)?;
+    let mint_authority_account = next_account_info(account_info_iter)?;
+    let token_program_account = next_account_info(account_info_iter)?;
+
+    if *mint_authority_account.key != *mint_account.key {
+        msg!(
+            "Unauthorized minting attempt by: {:?}",
+            mint_authority_account.key
+        );
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    msg!("Minting {} FLG tokens to destination account", amount);
+
+    let mint_to_ix = mint_to(
+        &spl_token::id(),
+        mint_account.key,
+        destination_token_account.key,
+        mint_authority_account.key,
+        &[],
+        amount,
+    )?;
+
+    invoke(
+        &mint_to_ix,
+        &[
+            mint_account.clone(),
+            destination_token_account.clone(),
+            mint_authority_account.clone(),
             token_program_account.clone(),
         ],
     )?;
