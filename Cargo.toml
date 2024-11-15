@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-solana-program = "=1.14.10"
+solana-program = "=1.17.0"
 spl-token = "3.5.0"       
-borsh = "0.10.3"      
+borsh = "0.10.3" 
+ahash = "=0.8.6"
+
+[lib]
+crate-type = ["cdylib", "lib"]
