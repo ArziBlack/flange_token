@@ -7,7 +7,6 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
-// Entry point of the program
 entrypoint!(process_instruction);
 
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
