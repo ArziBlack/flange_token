@@ -7,7 +7,6 @@ use solana_program::{
     pubkey::Pubkey,
 };
 use spl_token::instruction::{mint_to, transfer as token_transfer};
-use spl_token::state::Mint;
 
 const AUTHORIZED_SELLERS: &[&str] = &[
     "FGcSKtGsjLcAqMpnbm7kQbgpBXGEW6bQTXmFntuREjXb",
