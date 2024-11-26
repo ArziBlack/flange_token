@@ -18,6 +18,21 @@ pub struct MetadataInfo {
     pub uri: String,
 }
 
+fn check_update_authority(
+    update_authority_info: &AccountInfo,
+    expected_update_authority: &OptionalNonZeroPubkey,
+) -> Result<(), ProgramError> {
+    if !update_authority_info.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+    let update_authority = Option::<Pubkey>::from(*expected_update_authority)
+        .ok_or(TokenMetadataError::ImmutableMetadata)?;
+    if update_authority != *update_authority_info.key {
+        return Err(TokenMetadataError::IncorrectUpdateAuthority.into());
+    }
+    Ok(())
+}
+
 pub fn process_create_metadata(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
