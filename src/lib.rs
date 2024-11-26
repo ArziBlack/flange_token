@@ -32,6 +32,16 @@ pub enum FlangeInstruction {
     },
 }
 
+pub fn my_try_from_slice_unchecked<T: borsh::BorshDeserialize>(
+    data: &[u8],
+) -> Result<T, ProgramError> {
+    let mut data_mut = data;
+    match T::deserialize(&mut data_mut) {
+        Ok(result) => Ok(result),
+        Err(_) => Err(ProgramError::InvalidInstructionData),
+    }
+}
+
 pub fn process_instruction(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
