@@ -1,3 +1,5 @@
+use crate::metadata::MetadataInfo;
+use crate::metadata::{create_metadata_account, update_metadata_account};
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,

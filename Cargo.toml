@@ -8,6 +8,7 @@ solana-program = "=1.17.0"
 spl-token = { version="3.5.0", features = [ "no-entrypoint" ] }      
 borsh = "0.10.3" 
 ahash = "=0.8.6"
+metaplex = "0.5"
 
 [lib]
 crate-type = ["cdylib", "lib"]
