@@ -25,7 +25,6 @@ pub fn freeze_wallet(program_id: &Pubkey, accounts: &[AccountInfo]) -> Result<()
     let token_mint = next_account_info(account_info_iter)?;
     let freeze_authority = next_account_info(account_info_iter)?;
 
-    // Verify freeze authority is whitelisted
     if !is_whitelisted(freeze_authority.key) {
         msg!("Unauthorized freeze authority: {:?}", freeze_authority.key);
         return Err(ProgramError::InvalidAccountData);
