@@ -9,7 +9,7 @@ use solana_program::{
 
 entrypoint!(process_instruction);
 
-#[derive(BorshSerialize, BorshDeserialize, Debug)]
+// #[derive(BorshSerialize, BorshDeserialize, Debug)]
 pub enum FlangeInstruction {
     Buy { amount: u64 },
     Sell { amount: u64 },
