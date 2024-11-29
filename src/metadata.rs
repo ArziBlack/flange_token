@@ -1,126 +1,94 @@
-// use mpl_token_metadata::{
-//     instruction::{create_metadata_accounts_v3, update_metadata_accounts_v2},
-//     state::{Creator, DataV2, Metadata},
-//     ID,
-// };
+use mpl_token_metadata::{
+    instructions::{CreateV1, CreateV1InstructionArgs},
+    types::TokenStandard,
+};
+use solana_program::{pubkey::Pubkey, system_program, sysvar};
 
-// use solana_program::{
-//     account_info::{next_account_info, AccountInfo},
-//     msg,
-//     program::{invoke, invoke_signed},
-//     program_error::ProgramError,
-//     pubkey::Pubkey,
-//     system_instruction,
-// };
+/// Creates a metadata account for a fungible token.
+///
+/// # Arguments
+/// * `metadata` - The metadata account Pubkey.
+/// * `mint_pubkey` - The mint account Pubkey.
+/// * `payer_pubkey` - The payer Pubkey (who pays for the creation of accounts).
+pub fn create_token_metadata_instruction(
+    metadata: Pubkey,
+    mint_pubkey: Pubkey,
+    payer_pubkey: Pubkey,
+) -> solana_program::instruction::Instruction {
+    // Instruction arguments for creating metadata for a fungible token
+    let args = CreateV1InstructionArgs {
+        name: String::from("Flange Token"), // Token name
+        symbol: String::from("FLGT"),       // Token symbol
+        uri: String::from("https://example.com/metadata.json"), // Metadata URI
+        seller_fee_basis_points: 0,         // No royalties for fungible tokens
+        primary_sale_happened: false,       // No initial sale
+        is_mutable: true,                   // Allow updates to metadata
+        token_standard: TokenStandard::Fungible, // Set token standard to fungible
+        collection: None,                   // Not applicable for fungible tokens
+        uses: None,                         // Not applicable for fungible tokens
+        collection_details: None,           // Not applicable for fungible tokens
+        creators: None,                     // Optional creators (e.g., for attribution)
+        rule_set: None,                     // No programmable rules
+        decimals: Some(6),                  // Example: 6 decimals for fungible tokens
+        print_supply: None,                 // Not applicable for fungible tokens
+    };
 
-// pub struct MetadataInfo {
-//     pub name: String,
-//     pub symbol: String,
-//     pub uri: String,
-// }
+    // Instruction accounts for creating the metadata
+    let create_accounts: CreateV1 = CreateV1 {
+        metadata,
+        master_edition: None, // Master edition is not required for fungible tokens
+        mint: (mint_pubkey, true), // Mint account, must be a signer
+        authority: payer_pubkey, // Token authority
+        payer: payer_pubkey,  // Payer for account creation
+        update_authority: (payer_pubkey, true), // Update authority, must be a signer
+        system_program: system_program::ID, // System program
+        sysvar_instructions: sysvar::instructions::ID, // Sysvar instructions account
+        spl_token_program: spl_token::ID, // SPL token program
+    };
 
-// pub fn process_create_metadata(
-//     program_id: &Pubkey,
-//     accounts: &[AccountInfo],
-//     metadata_info: MetadataInfo,
-//     creators: Option<Vec<Creator>>,
-//     seller_fee_basis_points: u16,
-// ) -> Result<(), ProgramError> {
-//     let account_info_iter = &mut accounts.iter();
+    // Generate and return the instruction
+    create_accounts.instruction(args)
+}
 
-//     let payer = next_account_info(account_info_iter)?;
-//     let mint_account = next_account_info(account_info_iter)?;
-//     let metadata_account = next_account_info(account_info_iter)?;
-//     let token_program = next_account_info(account_info_iter)?;
-//     let mint_authority = next_account_info(account_info_iter)?;
-
-//     if !payer.is_signer {
-//         return Err(ProgramError::MissingRequiredSignature);
-//     }
-
-//     let metadata_account_key = *metadata_account.key;
-
-//     let data = DataV2 {
-//         name: metadata_info.name,
-//         symbol: metadata_info.symbol,
-//         uri: metadata_info.uri,
-//         seller_fee_basis_points,
-//         creators,
+// Function to create the metadata for a fungible token using CreateMetadataAccountV3
+// pub fn create_metadata_account_v3_instruction(
+//     metadata: Pubkey,
+//     mint_pubkey: Pubkey,
+//     mint_authority: Pubkey,
+//     payer_pubkey: Pubkey,
+//     update_authority_pubkey: Pubkey,
+//     system_program_id: Pubkey,
+//     rent_account: Option<Pubkey>,
+//     token_name: String,
+//     token_symbol: String,
+//     token_uri: String,
+// ) -> Instruction {
+//     let _data = DataV2 {
+//         name: token_name,
+//         symbol: token_symbol,
+//         uri: token_uri,
+//         seller_fee_basis_points: todo!(),
+//         creators: todo!(),
 //         collection: todo!(),
 //         uses: todo!(),
 //     };
 
-//     let create_metadata_ix = create_metadata_accounts_v3(
-//         ID,
-//         metadata_account_key,
-//         *mint_account.key,
-//         *mint_authority.key,
-//         *payer.key,
-//         *payer.key,
-//         data.name,
-//         data.symbol,
-//         data.uri,
-//         data.creators,
-//         data.seller_fee_basis_points,
-//         true,
-//         true,
-//         None,
-//         None,
-//         None,
-//     );
+//     let _args: CreateMetadataAccountV3InstructionArgs = CreateMetadataAccountV3InstructionArgs {
+//         data: _data,
+//         is_mutable: true,         // Make the metadata mutable
+//         collection_details: None, // Optional: Set this to Some(CollectionDetails) if needed
+//     };
 
-//     invoke(
-//         &create_metadata_ix,
-//         &[
-//             payer.clone(),
-//             mint_account.clone(),
-//             metadata_account.clone(),
-//             token_program.clone(),
-//         ],
-//     )?;
+//     let _metadata_account = CreateMetadataAccountV3 {
+//         metadata,
+//         mint: mint_pubkey,
+//         mint_authority,
+//         payer: payer_pubkey,
+//         update_authority: (update_authority_pubkey, true),
+//         system_program: todo!(),
+//         rent: Some(solana_program::sysvar::rent::ID), // Set update authority and whether it's a signer
+//     };
 
-//     msg!("Metadata account created successfully using v3.");
-//     Ok(())
-// }
-
-// pub fn process_update_metadata(
-//     program_id: &Pubkey,
-//     accounts: &[AccountInfo],
-//     metadata_key: Pubkey,
-//     update_authority_info: &AccountInfo,
-//     new_update_authority: Option<Pubkey>,
-//     data: Option<DataV2>,
-//     primary_sale_happened: Option<bool>,
-//     is_mutable: Option<bool>,
-// ) -> Result<(), ProgramError> {
-//     let account_info_iter = &mut accounts.iter();
-
-//     let metadata_account = next_account_info(account_info_iter)?;
-//     let update_authority = next_account_info(account_info_iter)?;
-
-//     if !update_authority.is_signer {
-//         return Err(ProgramError::MissingRequiredSignature);
-//     }
-
-//     if metadata_account.key != &metadata_key {
-//         return Err(ProgramError::InvalidAccountData);
-//     }
-
-//     let update_metadata_ix = update_metadata_accounts_v2(
-//         mpl_token_metadata::ID,
-//         *metadata_account.key,
-//         *update_authority.key,
-//         new_update_authority,
-//         data,
-//         primary_sale_happened,
-//         is_mutable,
-//     );
-
-//     invoke(
-//         &update_metadata_ix,
-//         &[metadata_account.clone(), update_authority.clone()],
-//     )?;
-
-//     msg!("Metadata account updated successfully using update_metadata_accounts_v2.");
-//     Ok(())
+//     // Create the metadata account instruction
+//     _metadata_account.instruction(_args)
 // }
