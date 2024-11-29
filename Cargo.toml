@@ -7,13 +7,9 @@ edition = "2021"
 [dependencies]
 solana-program = "=1.17.0"
 spl-token = { version="3.5.0", features = [ "no-entrypoint" ] }      
-metaplex = "0.0.1"
-borsh = "0.10.3"
-ahash = "=0.8.6"
+ahash = "=0.8.6" 
+borsh = "0.9.1"
 mpl-token-metadata = {version = "1.2.5", features = ["no-entrypoint"]}
 
 [lib]
 crate-type = ["cdylib", "lib"]
-
-[package.metadata.docs.rs]
-targets = ["x86_64-unknown-linux-gnu"]
