@@ -1,22 +1,22 @@
 pub mod freeze;
-pub mod metadata;
+// pub mod metadata;
 pub mod process;
-pub mod utils;
+// pub mod utils;
 
 use borsh::{BorshDeserialize, BorshSerialize};
 use freeze::freeze_wallet;
 // use metadata::{process_create_metadata, process_update_metadata};
-use mpl_token_metadata::state::DataV2;
+// use mpl_token_metadata::state::DataV2;
 use process::{process_buy, process_mint, process_sell};
 use solana_program::{
-    account_info::AccountInfo, borsh0_10::try_from_slice_unchecked, entrypoint,
-    entrypoint::ProgramResult, hash::Hash, program_error::ProgramError, pubkey::Pubkey,
+    account_info::AccountInfo, entrypoint, entrypoint::ProgramResult, hash::Hash,
+    program_error::ProgramError, pubkey::Pubkey,
 };
-use utils::MetadataInfo;
+// use utils::MetadataInfo;
 
 entrypoint!(process_instruction);
 
-#[derive(BorshSerialize, BorshDeserialize, Default)]
+#[derive(BorshSerialize, BorshDeserialize, Debug)]
 pub enum FlangeInstruction {
     Buy { amount: u64 },
     Sell { amount: u64 },
@@ -36,6 +36,7 @@ pub enum FlangeInstruction {
     // },
 }
 
+#[derive(BorshSerialize, BorshDeserialize, Debug)]
 pub struct ManageMetadataArgs {
     pub name: Option<String>,
     pub symbol: Option<String>,
@@ -44,22 +45,13 @@ pub struct ManageMetadataArgs {
     pub is_create: bool,
 }
 
-pub fn my_try_from_slice_unchecked(data: &[u8]) -> Result<T, ProgramError> {
-    let mut data_mut = data;
-    match T::deserialize(&mut data_mut) {
-        Ok(result) => Ok(result),
-        Err(_) => Err(ProgramError::InvalidInstructionData),
-    }
-}
-
 pub fn process_instruction(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    let instruction: FlangeInstruction =
-        FlangeInstruction::try_from_slice_unchecked(instruction_data)
-            .map_err(|_| ProgramError::InvalidInstructionData)?;
+    let instruction = FlangeInstruction::try_from_slice(instruction_data)
+        .map_err(|_| ProgramError::InvalidInstructionData)?;
 
     match instruction {
         FlangeInstruction::Buy { amount } => process_buy(program_id, accounts, amount),

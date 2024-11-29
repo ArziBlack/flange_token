@@ -8,8 +8,8 @@ edition = "2021"
 solana-program = "=1.17.0"
 spl-token = { version="3.5.0", features = [ "no-entrypoint" ] }      
 ahash = "=0.8.6" 
-borsh = "0.9.1"
-mpl-token-metadata = {version = "1.2.5", features = ["no-entrypoint"]}
+borsh = "=0.9.3"
+mpl-token-metadata = "3.2.3"
 
 [lib]
 crate-type = ["cdylib", "lib"]
