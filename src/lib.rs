@@ -4,7 +4,7 @@ pub mod process;
 
 use borsh::{BorshDeserialize, BorshSerialize};
 use freeze::freeze_wallet;
-// use metadata::{process_create_metadata, process_update_metadata};
+use metadata::create_token_metadata_instruction;
 use process::{process_buy, process_mint, process_sell};
 use solana_program::{
     account_info::AccountInfo, entrypoint, entrypoint::ProgramResult, program_error::ProgramError,
@@ -15,10 +15,21 @@ entrypoint!(process_instruction);
 
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
 pub enum FlangeInstruction {
-    Buy { amount: u64 },
-    Sell { amount: u64 },
-    Mint { amount: u64 },
+    Buy {
+        amount: u64,
+    },
+    Sell {
+        amount: u64,
+    },
+    Mint {
+        amount: u64,
+    },
     FreezeWallet,
+    CreateMetaData {
+        metadata: Pubkey,
+        mint_pubkey: Pubkey,
+        payer_pubkey: Pubkey,
+    },
 }
 
 pub fn process_instruction(
@@ -34,5 +45,16 @@ pub fn process_instruction(
         FlangeInstruction::Sell { amount } => process_sell(program_id, accounts, amount),
         FlangeInstruction::Mint { amount } => process_mint(program_id, accounts, amount),
         FlangeInstruction::FreezeWallet => freeze_wallet(program_id, accounts),
+        FlangeInstruction::CreateMetaData {
+            metadata,
+            mint_pubkey,
+            payer_pubkey,
+        } => create_token_metadata_instruction(
+            program_id,
+            accounts,
+            metadata,
+            mint_pubkey,
+            payer_pubkey,
+        ),
     }
 }

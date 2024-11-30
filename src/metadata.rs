@@ -2,19 +2,26 @@ use mpl_token_metadata::{
     instructions::{CreateV1, CreateV1InstructionArgs},
     types::TokenStandard,
 };
-use solana_program::{pubkey::Pubkey, system_program, sysvar};
+use solana_program::{
+    account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey, system_program, sysvar,
+};
 
 /// Creates a metadata account for a fungible token.
 ///
 /// # Arguments
+/// * `program_id` - The program ID of the executing program.
+/// * `accounts` - The list of account infos required by the instruction.
 /// * `metadata` - The metadata account Pubkey.
 /// * `mint_pubkey` - The mint account Pubkey.
 /// * `payer_pubkey` - The payer Pubkey (who pays for the creation of accounts).
 pub fn create_token_metadata_instruction(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
     metadata: Pubkey,
     mint_pubkey: Pubkey,
     payer_pubkey: Pubkey,
-) -> solana_program::instruction::Instruction {
+) -> Result<(), ProgramError> {
+    let _ = program_id;
     // Instruction arguments for creating metadata for a fungible token
     let args = CreateV1InstructionArgs {
         name: String::from("Flange Token"), // Token name
@@ -33,8 +40,17 @@ pub fn create_token_metadata_instruction(
         print_supply: None,                 // Not applicable for fungible tokens
     };
 
+    // Validate account references (basic checks)
+    let metadata_account = accounts.iter().find(|account| account.key == &metadata);
+    let mint_account = accounts.iter().find(|account| account.key == &mint_pubkey);
+    let payer_account = accounts.iter().find(|account| account.key == &payer_pubkey);
+
+    if metadata_account.is_none() || mint_account.is_none() || payer_account.is_none() {
+        return Err(solana_program::program_error::ProgramError::InvalidAccountData);
+    }
+
     // Instruction accounts for creating the metadata
-    let create_accounts: CreateV1 = CreateV1 {
+    let create_accounts = CreateV1 {
         metadata,
         master_edition: None, // Master edition is not required for fungible tokens
         mint: (mint_pubkey, true), // Mint account, must be a signer
@@ -47,48 +63,6 @@ pub fn create_token_metadata_instruction(
     };
 
     // Generate and return the instruction
-    create_accounts.instruction(args)
+    create_accounts.instruction(args);
+    Ok(())
 }
-
-// Function to create the metadata for a fungible token using CreateMetadataAccountV3
-// pub fn create_metadata_account_v3_instruction(
-//     metadata: Pubkey,
-//     mint_pubkey: Pubkey,
-//     mint_authority: Pubkey,
-//     payer_pubkey: Pubkey,
-//     update_authority_pubkey: Pubkey,
-//     system_program_id: Pubkey,
-//     rent_account: Option<Pubkey>,
-//     token_name: String,
-//     token_symbol: String,
-//     token_uri: String,
-// ) -> Instruction {
-//     let _data = DataV2 {
-//         name: token_name,
-//         symbol: token_symbol,
-//         uri: token_uri,
-//         seller_fee_basis_points: todo!(),
-//         creators: todo!(),
-//         collection: todo!(),
-//         uses: todo!(),
-//     };
-
-//     let _args: CreateMetadataAccountV3InstructionArgs = CreateMetadataAccountV3InstructionArgs {
-//         data: _data,
-//         is_mutable: true,         // Make the metadata mutable
-//         collection_details: None, // Optional: Set this to Some(CollectionDetails) if needed
-//     };
-
-//     let _metadata_account = CreateMetadataAccountV3 {
-//         metadata,
-//         mint: mint_pubkey,
-//         mint_authority,
-//         payer: payer_pubkey,
-//         update_authority: (update_authority_pubkey, true),
-//         system_program: todo!(),
-//         rent: Some(solana_program::sysvar::rent::ID), // Set update authority and whether it's a signer
-//     };
-
-//     // Create the metadata account instruction
-//     _metadata_account.instruction(_args)
-// }
