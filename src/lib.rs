@@ -1,19 +1,45 @@
+pub mod metadata;
 pub mod process;
 
 use borsh::{BorshDeserialize, BorshSerialize};
-use process::{process_buy, process_sell};
+use metadata::{process_create_metadata, process_update_metadata};
+use process::{process_buy, process_mint, process_sell};
 use solana_program::{
     account_info::AccountInfo, entrypoint, entrypoint::ProgramResult, program_error::ProgramError,
     pubkey::Pubkey,
 };
 
-// Entry point of the program
 entrypoint!(process_instruction);
 
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
 pub enum FlangeInstruction {
-    Buy { amount: u64 },
-    Sell { amount: u64 },
+    Buy {
+        amount: u64,
+    },
+    Sell {
+        amount: u64,
+    },
+    Mint {
+        amount: u64,
+    },
+    CreateMetadata {
+        name: String,
+        symbol: String,
+        uri: String,
+    },
+    UpdateMetadata {
+        uri: String,
+    },
+}
+
+pub fn my_try_from_slice_unchecked<T: borsh::BorshDeserialize>(
+    data: &[u8],
+) -> Result<T, ProgramError> {
+    let mut data_mut = data;
+    match T::deserialize(&mut data_mut) {
+        Ok(result) => Ok(result),
+        Err(_) => Err(ProgramError::InvalidInstructionData),
+    }
 }
 
 pub fn process_instruction(
@@ -21,11 +47,18 @@ pub fn process_instruction(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    let instruction = FlangeInstruction::try_from_slice(instruction_data)
+    let instruction: FlangeInstruction = FlangeInstruction::try_from_slice(instruction_data)
         .map_err(|_| ProgramError::InvalidInstructionData)?;
 
     match instruction {
         FlangeInstruction::Buy { amount } => process_buy(program_id, accounts, amount),
         FlangeInstruction::Sell { amount } => process_sell(program_id, accounts, amount),
+        FlangeInstruction::Mint { amount } => process_mint(program_id, accounts, amount),
+        FlangeInstruction::CreateMetadata { name, symbol, uri } => {
+            process_create_metadata(program_id, accounts, metadata_info)
+        }
+        FlangeInstruction::UpdateMetadata { uri } => {
+            process_update_metadata(program_id, accounts, uri)
+        }
     }
 }
